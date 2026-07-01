@@ -1,0 +1,6 @@
+{
+  "properties": {
+    "linuxFxVersion": "NODE|20-lts",
+    "appCommandLine": "npm start"
+  }
+}
