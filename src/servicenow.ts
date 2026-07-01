@@ -56,7 +56,7 @@ async function resolveSysIdFromNumber(
   args: Record<string, unknown>,
   creds: SNCredentials
 ): Promise<string | null> {
-  const number = args["number"];
+  const number = args["number"] ?? args["incident_number"];
   if (!number || typeof number !== "string") return null;
 
   const tableName = tableNameFromEndpoint(tool.endpoint);
@@ -93,6 +93,45 @@ async function resolveSysIdFromNumber(
     };
     const sysId = payload.result?.[0]?.sys_id;
     return sysId ?? null;
+  } catch {
+    return null;
+  }
+}
+
+async function resolveIncidentSysIdByNumber(
+  incidentNumber: string,
+  creds: SNCredentials
+): Promise<string | null> {
+  const baseUrl = creds.instanceUrl.replace(/\/$/, "");
+  const url =
+    `${baseUrl}/api/now/table/incident` +
+    `?sysparm_query=number=${encodeURIComponent(incidentNumber)}` +
+    `&sysparm_fields=sys_id&sysparm_limit=1`;
+
+  const headers: Record<string, string> = {
+    Authorization: authHeader(creds),
+    Accept: "application/json",
+  };
+
+  const urlObj = new URL(url);
+  const res = await httpsRequest(
+    urlObj.href,
+    {
+      method: "GET",
+      hostname: urlObj.hostname,
+      path: urlObj.pathname + urlObj.search,
+      headers,
+    },
+    undefined
+  );
+
+  if (res.status >= 400) return null;
+
+  try {
+    const payload = JSON.parse(res.text) as {
+      result?: Array<{ sys_id?: string }>;
+    };
+    return payload.result?.[0]?.sys_id ?? null;
   } catch {
     return null;
   }
@@ -150,6 +189,26 @@ export async function callTool(
     const resolvedSysId = await resolveSysIdFromNumber(tool, args, creds);
     if (resolvedSysId) {
       buckets.path["sys_id"] = resolvedSysId;
+    }
+  }
+
+  // Convenience for incident task creation: accept `incident_number`
+  // and resolve the incident reference field automatically.
+  if (
+    tool.method === "POST" &&
+    tool.endpoint === "/api/now/table/incident_task" &&
+    buckets.body["incident"] === undefined
+  ) {
+    const incidentNumber = args["incident_number"];
+    if (typeof incidentNumber === "string" && incidentNumber.trim()) {
+      const incidentSysId = await resolveIncidentSysIdByNumber(incidentNumber, creds);
+      if (!incidentSysId) {
+        throw new Error(`Incident not found for number: ${incidentNumber}`);
+      }
+      buckets.body["incident"] = incidentSysId;
+      delete buckets.body["incident_number"];
+      delete buckets.query["incident_number"];
+      delete buckets.path["incident_number"];
     }
   }
 

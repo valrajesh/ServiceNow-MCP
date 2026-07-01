@@ -97,6 +97,51 @@
             }
           ],
           "id": "23a698ae-8474-443b-8cca-87fc2283d710"
+        },
+        {
+          "name": "create_incident_task",
+          "description": "Create an incident task under an incident. Pass incident_number instead of sys_id.",
+          "method": "POST",
+          "endpoint": "/api/now/table/incident_task",
+          "apiType": "table",
+          "parameters": [
+            {
+              "name": "incident_number",
+              "description": "Parent incident number (for example INC0010005).",
+              "type": "string",
+              "required": true,
+              "in": "body"
+            },
+            {
+              "name": "short_description",
+              "description": "Short description of the incident task.",
+              "type": "string",
+              "required": true,
+              "in": "body"
+            },
+            {
+              "name": "description",
+              "description": "Detailed description for the incident task.",
+              "type": "string",
+              "required": false,
+              "in": "body"
+            },
+            {
+              "name": "work_notes",
+              "description": "Optional initial work notes.",
+              "type": "string",
+              "required": false,
+              "in": "body"
+            },
+            {
+              "name": "priority",
+              "description": "Optional priority value.",
+              "type": "string",
+              "required": false,
+              "in": "body"
+            }
+          ],
+          "id": "8d51cd85-c6f4-4d70-b8e3-e894d57a13ab"
         }
       ]
     },
