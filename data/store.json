@@ -1,7 +1,7 @@
 {
   "instance": {
     "url": "https://dev341387.service-now.com/",
-    "username": "ama.raj"
+    "username": "ama.servicenow"
   },
   "servers": [
     {
@@ -69,16 +69,23 @@
         },
         {
           "name": "update_incident",
-          "description": "This tool can be used to update the incidents using sysid",
+          "description": "Update an incident. Prefer passing incident number (for example INC0010005); sys_id is optional.",
           "method": "PATCH",
           "endpoint": "/api/now/table/incident/{sys_id}",
           "apiType": "table",
           "parameters": [
             {
+              "name": "number",
+              "description": "Incident number (for example INC0010005). Used to resolve sys_id automatically.",
+              "type": "string",
+              "required": true,
+              "in": "query"
+            },
+            {
               "name": "sys_id",
               "description": "sys id of the incident to update",
               "type": "string",
-              "required": true,
+              "required": false,
               "in": "path"
             },
             {

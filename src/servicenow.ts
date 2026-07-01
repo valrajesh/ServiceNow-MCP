@@ -46,6 +46,58 @@ function resolveLocation(p: Parameter, method: Tool["method"], pathNames: Set<st
   return defaultLocation(method);
 }
 
+function tableNameFromEndpoint(endpoint: string): string | null {
+  const match = endpoint.match(/^\/api\/now\/table\/([^/?]+)/);
+  return match ? match[1] : null;
+}
+
+async function resolveSysIdFromNumber(
+  tool: Tool,
+  args: Record<string, unknown>,
+  creds: SNCredentials
+): Promise<string | null> {
+  const number = args["number"];
+  if (!number || typeof number !== "string") return null;
+
+  const tableName = tableNameFromEndpoint(tool.endpoint);
+  if (!tableName) return null;
+
+  const baseUrl = creds.instanceUrl.replace(/\/$/, "");
+  const url =
+    `${baseUrl}/api/now/table/${tableName}` +
+    `?sysparm_query=number=${encodeURIComponent(number)}` +
+    `&sysparm_fields=sys_id&sysparm_limit=1`;
+
+  const headers: Record<string, string> = {
+    Authorization: authHeader(creds),
+    Accept: "application/json",
+  };
+
+  const urlObj = new URL(url);
+  const res = await httpsRequest(
+    urlObj.href,
+    {
+      method: "GET",
+      hostname: urlObj.hostname,
+      path: urlObj.pathname + urlObj.search,
+      headers,
+    },
+    undefined
+  );
+
+  if (res.status >= 400) return null;
+
+  try {
+    const payload = JSON.parse(res.text) as {
+      result?: Array<{ sys_id?: string }>;
+    };
+    const sysId = payload.result?.[0]?.sys_id;
+    return sysId ?? null;
+  } catch {
+    return null;
+  }
+}
+
 // Maps tool parameters to a ServiceNow REST call.
 // - `{name}` placeholders in endpoint → substituted from path params
 // - body params → JSON body (flat object)
@@ -86,6 +138,18 @@ export async function callTool(
   for (const name of pathNames) {
     if (buckets.path[name] === undefined && args[name] !== undefined) {
       buckets.path[name] = args[name];
+    }
+  }
+
+  // Convenience fallback for update tools: allow callers to pass `number`
+  // and resolve `{sys_id}` automatically for ServiceNow table records.
+  if (
+    pathNames.has("sys_id") &&
+    (buckets.path["sys_id"] === undefined || buckets.path["sys_id"] === null || buckets.path["sys_id"] === "")
+  ) {
+    const resolvedSysId = await resolveSysIdFromNumber(tool, args, creds);
+    if (resolvedSysId) {
+      buckets.path["sys_id"] = resolvedSysId;
     }
   }
 
