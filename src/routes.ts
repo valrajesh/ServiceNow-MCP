@@ -30,7 +30,7 @@ export function buildRouter(manager: MCPManager, getCreds: () => SNCredentials):
       const server = storage.listServers().find((s) => s.name === serverName);
       if (server) return `http://localhost:${server.port}/mcp`;
     }
-    return `${base}/rpc`;
+    return `${base}/mcp/${encodeURIComponent(serverName)}`;
   }
 
   // ── Instance ────────────────────────────────────────────────────────────────

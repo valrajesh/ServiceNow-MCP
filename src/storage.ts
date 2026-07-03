@@ -12,7 +12,10 @@ const EMPTY: Store = { instance: null, servers: [] };
 function read(): Store {
   if (!existsSync(DATA_FILE)) return structuredClone(EMPTY);
   try {
-    return JSON.parse(readFileSync(DATA_FILE, "utf8")) as Store;
+    const raw = readFileSync(DATA_FILE, "utf8");
+    // PowerShell Set-Content -Encoding UTF8 may write a BOM; strip it before JSON.parse.
+    const normalized = raw.charCodeAt(0) === 0xfeff ? raw.slice(1) : raw;
+    return JSON.parse(normalized) as Store;
   } catch {
     return structuredClone(EMPTY);
   }
