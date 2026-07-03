@@ -164,7 +164,7 @@
       <div class="logo">
         <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 6v6c0 5 3.5 8 8 10 4.5-2 8-5 8-10V6z"/><path d="M9 12l2 2 4-4"/></svg>
       </div>
-      <div><h1>MCP Gateway</h1><span>ServiceNow · Local</span></div>
+      <div><h1>MCP Gateway</h1><span>ServiceNow</span></div>
     </div>
 
     <div style="display:flex;flex-direction:column;flex:1;min-height:0">
@@ -637,7 +637,8 @@ function buildEndpointUrl(serverName, port) {
     const safePort = Number(port) || 7801;
     return `http://localhost:${safePort}/mcp`;
   }
-  return `${window.location.origin}/rpc`;
+  const safeName = encodeURIComponent(serverName || 'server-name');
+  return `${window.location.origin}/mcp/${safeName}`;
 }
 
 function updateGeneratedUrl() {
