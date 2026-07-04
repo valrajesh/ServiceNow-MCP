@@ -1,7 +1,7 @@
 ﻿{
     "instance":  {
-                     "url":  "https://dev341387.service-now.com/",
-                     "username":  "ama.servicenow"
+                     "url":  "https://cgsb.service-now.com",
+                     "username":  "Nova.user"
                  },
     "servers":  [
                     {
